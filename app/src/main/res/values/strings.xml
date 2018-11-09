@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">myapp</string>
+    <string name="app_name">MapTest</string>
+    <string name="title"><![CDATA[< Naver Map API >]]></string>
 </resources>
