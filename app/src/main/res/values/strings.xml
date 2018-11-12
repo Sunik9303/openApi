@@ -1,4 +1,25 @@
 <resources>
     <string name="app_name">MapTest</string>
-    <string name="title"><![CDATA[< Naver Map API >]]></string>
+    <string name="title">[ Naver Map API ]</string>
+    <string name="basic_title">[ BASIC MAP ]</string>
+    <string name="overlay_title">[ Naver MAP - Overlay ]</string>
+    <string name="event_title">[Naver MAP -Event ]</string>
+    <string name="none">none</string>
+    <string name="str_done">complete</string>
+
+    <string name="permission_denied">"권한 사용 동의해야만 APP 구동 가능합니다."</string>
+
+
+    <string name="my_location">현재 위치</string>
+    <string name="poi_title">관심 대상</string>
+    <string name="pio_path">경로</string>
+    <string name="pio_float">동적PIO</string>
+
+    <!-- ListView의 들어갈 항목 데이터  -->
+    <string-array name="items">
+        <item>BasicMap</item>
+        <item>ContollerMap</item>
+        <item>EventMap</item>
+        <item>OverlayMap</item>
+    </string-array>
 </resources>

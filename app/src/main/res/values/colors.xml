@@ -3,4 +3,11 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+    <color name="blue">#0000ff</color>
+
+    <drawable name="black_color">#ff000000</drawable>
+    <drawable name="selected_list_color">#ff32A800</drawable>
+    <drawable name="default_list_color">#ffffffff</drawable>
+
+    <drawable name="callout_textcolor">#ffffffff</drawable>
 </resources>
