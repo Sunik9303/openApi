@@ -1,15 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center">
-
-
-    <ListView
-        android:id="@+id/mapList"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="20dp">
+    <!-- Title -->
+    <TextView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:gravity="center"
+        android:text="@string/intro_title"
+        android:textColor="@android:color/holo_green_dark"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <!-- MAP ITEM -->
+    <TextView
+        android:id="@+id/mapITEM"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:background="@color/item_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:onClick="clickFunc"
+        android:padding="5dp"
+        android:text="@string/map_title"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <ListView   android:id="@+id/mapList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
+
+    <!-- LIFE ITEM -->
+    <TextView
+        android:id="@+id/lifeITEM"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:background="@color/item_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:onClick="clickFunc"
+        android:padding="5dp"
+        android:text="@string/life_title"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <ListView   android:id="@+id/lifeList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"/>
 
 </LinearLayout>

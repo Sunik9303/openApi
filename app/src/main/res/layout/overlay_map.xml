@@ -33,14 +33,6 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/myLocationBTN"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="clickFunc"
-            android:text="@string/my_location"
-            style="?android:attr/buttonStyle" />
-
-        <Button
             android:id="@+id/poiBTN"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -54,7 +46,15 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="clickFunc"
-            android:text="@string/pio_path" />
+            android:text="@string/path_title" />
+
+        <Button
+            android:id="@+id/piopathBTN"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="clickFunc"
+            android:text="@string/pio_path"
+            style="?android:attr/buttonStyle" />
 
         <Button
             android:id="@+id/floatBTN"

@@ -22,17 +22,20 @@
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity"></activity>
         <activity android:name=".TouchEventActivity"></activity>
-        <activity android:name=".introActivity">
+        <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".ControllerMapActivity"></activity>
-        <activity android:name=".OverlayMapActivity"></activity>
-        <activity android:name=".BasicMapActivity"></activity>
-        <activity android:name=".EventMapActivity"></activity>
+        <activity android:name=".WeatherInfoActivity" />
+        <activity android:name=".ControllerMapActivity" />
+        <activity android:name=".EventMapActivity"/>
+        <activity android:name=".OverlayMapActivity"/>
+        <activity android:name=".BasicMapActivity"/>
+        <activity android:name=".MyLocationMapActivity" />
+        <activity android:name=".SearchGeoMapActivity" />
     </application>
 
 </manifest>

@@ -1,18 +1,13 @@
 package com.sunik.myapp;
 
-import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.nhn.android.maps.NMapActivity;
-import com.nhn.android.maps.NMapCompassManager;
 import com.nhn.android.maps.NMapController;
-import com.nhn.android.maps.NMapLocationManager;
 import com.nhn.android.maps.NMapOverlay;
 import com.nhn.android.maps.NMapOverlayItem;
 import com.nhn.android.maps.NMapView;
@@ -25,9 +20,7 @@ import com.nhn.android.maps.overlay.NMapPOIdata;
 import com.nhn.android.maps.overlay.NMapPOIitem;
 import com.nhn.android.maps.overlay.NMapPathData;
 import com.nhn.android.maps.overlay.NMapPathLineStyle;
-import com.nhn.android.mapviewer.overlay.NMapCalloutCustomOverlay;
 import com.nhn.android.mapviewer.overlay.NMapCalloutOverlay;
-import com.nhn.android.mapviewer.overlay.NMapMyLocationOverlay;
 import com.nhn.android.mapviewer.overlay.NMapOverlayManager;
 import com.nhn.android.mapviewer.overlay.NMapPOIdataOverlay;
 import com.nhn.android.mapviewer.overlay.NMapPathDataOverlay;
@@ -41,15 +34,10 @@ public class OverlayMapActivity extends NMapActivity {
     //- Debug 변수 ----------------------------------------------------------------------------------
     private final String TAG = "OverlayMapActivity";
 
-    //- 상수 ----------------------------------------------------------------------------------------
-    private static final NGeoPoint  NMAP_LOCATION_DEFAULT = new NGeoPoint(126.978371, 37.5666091);
-    private static final int        NMAP_ZOOMLEVEL_DEFAULT  = 11;
+    //- Widget 객체 변수 -----------------------------------------------------------------------------
+    private NMapView                                        mMapView;
 
-    //- Widget 객체 변수
-    private NMapView                    mMapView;
-    private TextView                    mInfoTXT;
-
-    private NMapController              mMapController;
+    private NMapController                                  mMapController;
 
     //- 오버레이 관련 --------------------------------------------------------------------------------
     private NMapOverlayManager                              mOverlayManager;
@@ -58,22 +46,10 @@ public class OverlayMapActivity extends NMapActivity {
     private NMapViewResourceProvider                        mMapViewerResourceProvider;
     private OnDataProviderListener                          mDataProviderLST;
 
-    //-  현재 위치 오버레이
-    private NMapMyLocationOverlay                           mMyLocationOverlay;
-    private NMapLocationManager                             mMapLocationManager;
-    private NMapCompassManager                              mMapCompassManager;
-    private NMapView.OnMapViewDelegate                      mMapViewTouchDelegate;
-
-    private NMapLocationManager.OnLocationChangeListener    mMyLocationChangeListener;
-
-
-    private NMapPOIdataOverlay.OnStateChangeListener                mPOIdataStateChangeListener;
-    private NMapPOIdataOverlay                                      mFloatingPOIdataOverlay;
-    private NMapPOIdataOverlay.OnFloatingItemChangeListener         mPOIdataFloatingItemChangeListener;
-    private NMapPOIitem                                             mFloatingPOIitem;
-
-    private boolean                                         mLOCATION_MODE = false;
-    private boolean                                         mPOI_MODE = false;
+    private NMapPOIdataOverlay.OnStateChangeListener        mPOIdataStateChangeListener;
+    private NMapPOIdataOverlay                              mFloatingPOIdataOverlay;
+    private NMapPOIdataOverlay.OnFloatingItemChangeListener mPOIdataFloatingItemChangeListener;
+    private NMapPOIitem                                     mFloatingPOIitem;
 
     //--------------------------------------------------------------------------------------------------------
     //- Member Method :  Activity's Override Method
@@ -82,10 +58,12 @@ public class OverlayMapActivity extends NMapActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //- Activity 화면 지정하기
         setContentView(R.layout.overlay_map);
 
+        //- Widget 객체 가져오기
         mMapView = findViewById(R.id.map_view);
-        mInfoTXT = findViewById(R.id.infoTXT);
+        findViewById(R.id.infoTXT).setVisibility(View.GONE);
 
         //- NMapView 설정
         mMapView.setClientId(CLIENT_ID);
@@ -94,11 +72,11 @@ public class OverlayMapActivity extends NMapActivity {
         mMapView.setFocusable(true);
         mMapView.setFocusableInTouchMode(true);
         mMapView.requestFocus();
-
         //- 지도 정보 설정 및 읽기 객체 가져오기
         mMapController = mMapView.getMapController();
+        mMapController.setZoomLevel(10);
 
-        //- 리소스 프로바이더 생성 및 리스너 설정
+        //- 오버레이 관리를 위한 리소스 프로바이더 생성
         mMapViewerResourceProvider = new NMapViewResourceProvider(this);
         setListener();
         super.setMapDataProviderListener(mDataProviderLST);
@@ -107,43 +85,159 @@ public class OverlayMapActivity extends NMapActivity {
         mOverlayManager = new NMapOverlayManager(this, mMapView, mMapViewerResourceProvider);
         mOverlayManager.setOnCalloutOverlayListener(mCalloutOverlayListener);
         mOverlayManager.setOnCalloutOverlayViewListener(mCalloutOverlayViewListener);
-
-        //- 현재 위치 관련 설정
-        mMapLocationManager = new NMapLocationManager(this);
-        mMapLocationManager.setOnLocationChangeListener(mMyLocationChangeListener);
-        mMapCompassManager = new NMapCompassManager(this);
-        mMyLocationOverlay = mOverlayManager.createMyLocationOverlay(mMapLocationManager, mMapCompassManager);
-
-        //- Overlay Item 관련 설정
-
     }
+
     //--------------------------------------------------------------------------------------------------------
-    //- Member Method :  Custom
+    //- Member Method :  User Defined Method
+    //--------------------------------------------------------------------------------------------------------
+    private void setListener() {
+
+        //- PIO의 위치 변경 감지 및 처리 리스너
+        mDataProviderLST = new OnDataProviderListener() {
+            @Override
+            public void onReverseGeocoderResponse(NMapPlacemark placeMark, NMapError errInfo) {
+
+                Log.i(TAG, "onReverseGeocoderResponse: placeMark=" + ((placeMark != null) ? placeMark.toString() : null));
+
+                if (errInfo != null) {
+                    Log.e(TAG, "Failed to findPlacemarkAtLocation: error=" + errInfo.toString());
+                    Toast.makeText(OverlayMapActivity.this, errInfo.toString(), Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                if (mFloatingPOIitem != null && mFloatingPOIdataOverlay != null) {
+                    mFloatingPOIdataOverlay.deselectFocusedPOIitem();
+
+                    if (placeMark != null) mFloatingPOIitem.setTitle(placeMark.toString());
+
+                    mFloatingPOIdataOverlay.selectPOIitemBy(mFloatingPOIitem.getId(), false);
+                }
+            }
+        };
+
+
+        //- 말풍선 관련 리스너
+        mCalloutOverlayListener = new NMapOverlayManager.OnCalloutOverlayListener() {
+            @Override
+            public NMapCalloutOverlay onCreateCalloutOverlay(NMapOverlay itemOverlay, NMapOverlayItem overlayItem, Rect itemBounds) {
+
+                if (itemOverlay instanceof NMapPOIdataOverlay) {
+                    Log.i(TAG, "mCalloutOverlayListener()");
+                    NMapPOIdataOverlay poiDataOverlay = (NMapPOIdataOverlay) itemOverlay;
+
+                    if (!poiDataOverlay.isFocusedBySelectItem()){
+                        int countOfOverlappedItems = 1;
+
+                        NMapPOIdata poiData = poiDataOverlay.getPOIdata();
+                        for (int i = 0; i < poiData.count(); i++) {
+                            NMapPOIitem poiItem = poiData.getPOIitem(i);
+
+                            if (poiItem == overlayItem) continue;
+
+                            if (Rect.intersects(poiItem.getBoundsInScreen(), overlayItem.getBoundsInScreen())) {
+                                countOfOverlappedItems++;
+                            }
+                        }
+
+                        if (countOfOverlappedItems > 1) {
+                            String text = countOfOverlappedItems + " overlapped items for " + overlayItem.getTitle();
+                            Toast.makeText(OverlayMapActivity.this, text, Toast.LENGTH_LONG).show();
+                            return null;
+                        }
+                    }
+                }
+
+                // use custom old callout overlay
+                if (overlayItem instanceof NMapPOIitem) {
+                    NMapPOIitem poiItem = (NMapPOIitem) overlayItem;
+
+                    if (poiItem.showRightButton()) {
+                        return new NMapCalloutCustomOldOverlay(itemOverlay, overlayItem, itemBounds, mMapViewerResourceProvider);
+                    }
+                }
+
+                // use custom callout overlay
+                //return new NMapCalloutCustomOverlay(itemOverlay, overlayItem, itemBounds, mMapViewerResourceProvider);
+
+                //set basic callout overlay
+                return new NMapCalloutBasicOverlay(itemOverlay, overlayItem, itemBounds);
+            }
+        };
+
+        mCalloutOverlayViewListener = new NMapOverlayManager.OnCalloutOverlayViewListener() {
+            @Override
+            public View onCreateCalloutOverlayView(NMapOverlay itemOverlay, NMapOverlayItem overlayItem, Rect itemBounds) {
+
+                if (overlayItem != null) {
+                    Log.i(TAG, "mCalloutOverlayViewListener()");
+                    // [TEST] 말풍선 오버레이를 뷰로 설정함
+                    String title = overlayItem.getTitle();
+                    if (title != null && title.length() > 5) {
+                        return new NMapCalloutCustomOverlayView(OverlayMapActivity.this, itemOverlay, overlayItem, itemBounds);
+                    }
+                }
+                // null을 반환하면 말풍선 오버레이를 표시하지 않음
+                return null;
+            }
+        };
+
+        mPOIdataStateChangeListener = new NMapPOIdataOverlay.OnStateChangeListener() {
+            @Override
+            public void onCalloutClick(NMapPOIdataOverlay poiDataOverlay, NMapPOIitem item) {
+
+                Log.i(TAG, "mPOIdataStateChangeListener() - onCalloutClick: title=" + item.getTitle());
+
+                // [[TEMP]] handle a click event of the callout
+                Toast.makeText(OverlayMapActivity.this, "onCalloutClick: " + item.getTitle(), Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onFocusChanged(NMapPOIdataOverlay poiDataOverlay, NMapPOIitem item) {
+
+                if (item != null) {
+                    Log.i(TAG, "onFocusChanged: " + item.toString());
+                    mMapController.setMapCenter(item.getPoint());
+                } else {
+                    Log.i(TAG, "onFocusChanged: ");
+                }
+            }
+        };
+
+        mPOIdataFloatingItemChangeListener = new NMapPOIdataOverlay.OnFloatingItemChangeListener() {
+            @Override
+            public void onPointChanged(NMapPOIdataOverlay nMapPOIdataOverlay, NMapPOIitem nMapPOIitem) {
+                NGeoPoint point = nMapPOIitem.getPoint();
+
+                Log.i(TAG, "mPOIdataFloatingItemChangeListener() - onPointChanged: point=" + point.toString());
+
+                findPlacemarkAtLocation(point.longitude, point.latitude);
+                nMapPOIitem.setTitle(null);
+            }
+        };
+    }
+
+    //--------------------------------------------------------------------------------------------------------
+    //- Member Method :  XML onclick attribute Method
     //--------------------------------------------------------------------------------------------------------
     public void clickFunc(View v){
         switch(v.getId())
         {
-            case    R.id.myLocationBTN:
-                    mOverlayManager.clearOverlays();
-                    mMapController.setZoomLevel(NMAP_ZOOMLEVEL_DEFAULT);
-                    startMyLocation();
-                    break;
-
             case    R.id.poiBTN:
-                    stopMyLocation();
                     mOverlayManager.clearOverlays();
                     overlayPOIData();
                     break;
 
             case    R.id.pathBTN:
-                    stopMyLocation();
                     mOverlayManager.clearOverlays();
                     overlayPathData();
+                    break;
+
+            case    R.id.piopathBTN:
+                    mOverlayManager.clearOverlays();
                     overlayPathPOIdata();
                     break;
 
             case    R.id.floatBTN:
-                    stopMyLocation();
                     mOverlayManager.clearOverlays();
                     overlaytFloatingPOIdata();
                     break;
@@ -156,7 +250,7 @@ public class OverlayMapActivity extends NMapActivity {
         // Markers for POI item
         int markerId = NMapPOIflagType.PIN;
 
-        //-  POI data  설정
+        //-  POI data 설정
         NMapPOIdata poiData = new NMapPOIdata(2, mMapViewerResourceProvider);
         poiData.beginPOIdata(2);
 
@@ -169,7 +263,7 @@ public class OverlayMapActivity extends NMapActivity {
         // create POI data overlay
         NMapPOIdataOverlay poiDataOverlay = mOverlayManager.createPOIdataOverlay(poiData, null);
 
-        // set event listener to the overlay
+        //- PIO Item 변화 감지 및 처리
         poiDataOverlay.setOnStateChangeListener(mPOIdataStateChangeListener);
 
         // select an item
@@ -198,7 +292,8 @@ public class OverlayMapActivity extends NMapActivity {
         pathData.endPathData();
 
         NMapPathDataOverlay pathDataOverlay = mOverlayManager.createPathDataOverlay(pathData);
-        if (pathDataOverlay != null) {
+        if (pathDataOverlay != null)
+        {
             // add path data with polygon type
             NMapPathData pathData2 = new NMapPathData(4);
             pathData2.initPathData();
@@ -232,6 +327,7 @@ public class OverlayMapActivity extends NMapActivity {
         }
     }
 
+    //- 경로 시작 & 종료 지점에 PIO 표시 ----------------------------------------------------------------------
     private void overlayPathPOIdata() {
 
         // set POI data
@@ -285,165 +381,8 @@ public class OverlayMapActivity extends NMapActivity {
         }
     }
 
-    //--------------------------------------------------------------------------------------------------------
-    //- Member Method :  Custom
-    //--------------------------------------------------------------------------------------------------------
-    private void setListener() {
 
-        mMyLocationChangeListener = new NMapLocationManager.OnLocationChangeListener() {
-            @Override
-            public boolean onLocationChanged(NMapLocationManager locationManager, NGeoPoint myLocation) {
-                //- 현재 위치가 변경 이벤트 처리
-                if (mMapController != null) mMapController.animateTo(myLocation);
-                return true;
-            }
-
-            @Override
-            public void onLocationUpdateTimeout(NMapLocationManager locationManager) {
-                Toast.makeText(OverlayMapActivity.this, "Your current location is temporarily unavailable.", Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onLocationUnavailableArea(NMapLocationManager locationManager, NGeoPoint myLocation) {
-                //- 위치 탐색 불가능 지역 처리
-                Toast.makeText(OverlayMapActivity.this, "Your current location is unavailable area.", Toast.LENGTH_LONG).show();
-                stopMyLocation();
-            }
-        };
-        mMapViewTouchDelegate = new NMapView.OnMapViewDelegate(){
-            @Override
-            public boolean isLocationTracking() {
-                if (mMapLocationManager != null) {
-                    if (mMapLocationManager.isMyLocationEnabled()) {
-                        return mMapLocationManager.isMyLocationFixed();
-                    }
-                }
-                return false;
-            }
-        };
-
-        mDataProviderLST = new OnDataProviderListener() {
-            @Override
-            public void onReverseGeocoderResponse(NMapPlacemark placeMark, NMapError errInfo) {
-
-                Log.i(TAG, "onReverseGeocoderResponse: placeMark=" + ((placeMark != null) ? placeMark.toString() : null));
-
-                if (errInfo != null) {
-                    Log.e(TAG, "Failed to findPlacemarkAtLocation: error=" + errInfo.toString());
-                    Toast.makeText(OverlayMapActivity.this, errInfo.toString(), Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                if (mFloatingPOIitem != null && mFloatingPOIdataOverlay != null) {
-                    mFloatingPOIdataOverlay.deselectFocusedPOIitem();
-
-                    if (placeMark != null) mFloatingPOIitem.setTitle(placeMark.toString());
-
-                    mFloatingPOIdataOverlay.selectPOIitemBy(mFloatingPOIitem.getId(), false);
-                }
-            }
-        };
-
-
-        mCalloutOverlayListener = new NMapOverlayManager.OnCalloutOverlayListener() {
-            @Override
-            public NMapCalloutOverlay onCreateCalloutOverlay(NMapOverlay itemOverlay, NMapOverlayItem overlayItem, Rect itemBounds) {
-
-                if (itemOverlay instanceof NMapPOIdataOverlay) {
-                    NMapPOIdataOverlay poiDataOverlay = (NMapPOIdataOverlay) itemOverlay;
-
-                    if (!poiDataOverlay.isFocusedBySelectItem()) {
-                        int countOfOverlappedItems = 1;
-
-                        NMapPOIdata poiData = poiDataOverlay.getPOIdata();
-                        for (int i = 0; i < poiData.count(); i++) {
-                            NMapPOIitem poiItem = poiData.getPOIitem(i);
-
-                            if (poiItem == overlayItem) continue;
-
-                            if (Rect.intersects(poiItem.getBoundsInScreen(), overlayItem.getBoundsInScreen())) {
-                                countOfOverlappedItems++;
-                            }
-                        }
-
-                        if (countOfOverlappedItems > 1) {
-                            String text = countOfOverlappedItems + " overlapped items for " + overlayItem.getTitle();
-                            Toast.makeText(OverlayMapActivity.this, text, Toast.LENGTH_LONG).show();
-                            return null;
-                        }
-                    }
-                }
-
-                // use custom old callout overlay
-                if (overlayItem instanceof NMapPOIitem) {
-                    NMapPOIitem poiItem = (NMapPOIitem) overlayItem;
-
-                    if (poiItem.showRightButton()) {
-                        return new NMapCalloutCustomOldOverlay(itemOverlay, overlayItem, itemBounds, mMapViewerResourceProvider);
-                    }
-                }
-
-                // use custom callout overlay
-                return new NMapCalloutCustomOverlay(itemOverlay, overlayItem, itemBounds, mMapViewerResourceProvider);
-
-                //set basic callout overlay
-                //return new NMapCalloutBasicOverlay(itemOverlay, overlayItem, itemBounds);
-            }
-        };
-
-        mCalloutOverlayViewListener = new NMapOverlayManager.OnCalloutOverlayViewListener() {
-            @Override
-            public View onCreateCalloutOverlayView(NMapOverlay itemOverlay, NMapOverlayItem overlayItem, Rect itemBounds) {
-
-                if (overlayItem != null) {
-                    // [TEST] 말풍선 오버레이를 뷰로 설정함
-                    String title = overlayItem.getTitle();
-                    if (title != null && title.length() > 5) {
-                        return new NMapCalloutCustomOverlayView(OverlayMapActivity.this, itemOverlay, overlayItem, itemBounds);
-                    }
-                }
-                // null을 반환하면 말풍선 오버레이를 표시하지 않음
-                return null;
-            }
-        };
-
-        mPOIdataStateChangeListener = new NMapPOIdataOverlay.OnStateChangeListener() {
-            @Override
-            public void onCalloutClick(NMapPOIdataOverlay poiDataOverlay, NMapPOIitem item) {
-
-                Log.i(TAG, "onCalloutClick: title=" + item.getTitle());
-
-                // [[TEMP]] handle a click event of the callout
-                Toast.makeText(OverlayMapActivity.this, "onCalloutClick: " + item.getTitle(), Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onFocusChanged(NMapPOIdataOverlay poiDataOverlay, NMapPOIitem item) {
-
-                if (item != null) {
-                    Log.i(TAG, "onFocusChanged: " + item.toString());
-                } else {
-                    Log.i(TAG, "onFocusChanged: ");
-                }
-            }
-        };
-
-        mPOIdataFloatingItemChangeListener = new NMapPOIdataOverlay.OnFloatingItemChangeListener() {
-            @Override
-            public void onPointChanged(NMapPOIdataOverlay nMapPOIdataOverlay, NMapPOIitem nMapPOIitem) {
-                NGeoPoint point = nMapPOIitem.getPoint();
-
-                Log.i(TAG, "onPointChanged: point=" + point.toString());
-
-                findPlacemarkAtLocation(point.longitude, point.latitude);
-                nMapPOIitem.setTitle(null);
-            }
-        };
-
-    }
-
-    ;
-
+/*
     //- GPS 및 네트워크 활용 현재 위치 지정 -------------------------------------------------------------
     private void startMyLocation() {
 
@@ -483,4 +422,5 @@ public class OverlayMapActivity extends NMapActivity {
             }
         }
     }
+    */
 }

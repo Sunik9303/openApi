@@ -11,9 +11,23 @@
 
 
     <string name="my_location">현재 위치</string>
-    <string name="poi_title">관심 대상</string>
-    <string name="pio_path">경로</string>
+    <string name="poi_title">관심아이템</string>
+    <string name="path_title">경로</string>
+    <string name="pio_path">PIO경로</string>
     <string name="pio_float">동적PIO</string>
+
+    <!-- IntroActivity -->
+    <string name="map_title">◆ 지도 API</string>
+    <string name="life_title">◆ 생활정보 API</string>
+    <string name="intro_title">【 다양한 OPEN API 활용 】</string>
+
+    <!-- SearchGdoActivity -->
+    <string name="search_title">[ 주소 찾 기 ]</string>
+    <string name="lat"># 위도 </string>
+    <string name="lng"># 경도 </string>
+    <string name="lat_hint">126.978371</string>
+    <string name="lng_hint">37.5666091</string>
+    <string name="search">SERACH</string>
 
     <!-- ListView의 들어갈 항목 데이터  -->
     <string-array name="items">
@@ -21,5 +35,13 @@
         <item>ContollerMap</item>
         <item>EventMap</item>
         <item>OverlayMap</item>
+        <item>MyLocationMap</item>
+        <item>SearchMap</item>
     </string-array>
+
+    <string-array name="life_items">
+        <item>기상정보</item>
+        <item>대기질정보</item>
+    </string-array>
+
 </resources>
